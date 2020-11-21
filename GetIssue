@@ -1,0 +1,43 @@
+public class GetIssuesFromJira {
+    
+    public static void callout(){
+        
+        //Instantiate an httpRequest and set the required attributes
+        String access_token = label.access_token;
+        String token = 'Basic ' + access_token;
+        httpRequest req = new httpRequest();
+        
+        req.setMethod('GET');
+        
+        req.setEndpoint('https://team-1605701328905.atlassian.net/rest/api/3/issue/TES-3');
+        
+        req.setHeader('Accept','application/json');
+        req.setHeader('Authorization', token );
+        req.setTimeout(120000);
+        
+        httpResponse res = new http().send(req);
+        
+        system.debug(res.toString());
+        
+        system.debug(res.getBody());
+        String subject;
+        String description;
+        Map<String,Object> mapofResponse = (Map<String,Object>) JSON.deserializeUntyped(res.getBody()) ;
+        if(mapofResponse.keySet().contains('fields'))
+        {
+            Map<String,Object> mapofResponse1 = (Map<String,Object>) mapofResponse.get('fields');
+            subject =   String.valueOf( mapofResponse1.get('summary')); 
+            if(mapofResponse1.keySet().contains('issuetype'))
+            {
+                Map<String,Object> mapofResponse2 = (Map<String,Object>) mapofResponse1.get('issuetype');
+                description =   String.valueOf( mapofResponse2.get('description')); 
+            }
+        }
+        list<Milestone1_Milestone__c> milestones = [select id,name from Milestone1_Milestone__c limit 1];
+        Milestone1_Task__c  task = new Milestone1_Task__c();
+        task.name = subject;
+        task.Description__c = description;
+        task.Project_Milestone__c = milestones[0].id;
+        insert task;
+    }
+}
